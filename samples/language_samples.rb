@@ -47,7 +47,8 @@ def sentiment_from_cloud_storage_file storage_path:
 
   language = Google::Cloud::Language.new
 
-  response = language.analyze_sentiment gcs_content_uri: storage_path, type: :PLAIN_TEXT
+  response = language.analyze_sentiment gcs_content_uri: storage_path,
+                                        type: :PLAIN_TEXT
 
   sentiment = response.document_sentiment
   # [END migration_sentiment_gcs]
@@ -93,7 +94,8 @@ def entities_from_cloud_storage_file storage_path:
   require "google/cloud/language"
 
   language = Google::Cloud::Language.new
-  response = language.analyze_entities gcs_content_uri: storage_path, type: :PLAIN_TEXT
+  response = language.analyze_entities gcs_content_uri: storage_path,
+                                       type: :PLAIN_TEXT
 
   entities = response.entities
 
@@ -135,7 +137,8 @@ def syntax_from_cloud_storage_file storage_path:
   require "google/cloud/language"
 
   language = Google::Cloud::Language.new
-  response = language.analyze_syntax gcs_content_uri: storage_path, type: :PLAIN_TEXT
+  response = language.analyze_syntax gcs_content_uri: storage_path,
+                                     type: :PLAIN_TEXT
 
   sentences = response.sentences
   tokens    = response.tokens
@@ -173,7 +176,8 @@ def classify_text_from_cloud_storage_file storage_path:
   require "google/cloud/language"
 
   language = Google::Cloud::Language.new
-  response = language.classify_text gcs_content_uri: storage_path, type: :PLAIN_TEXT
+  response = language.classify_text gcs_content_uri: storage_path,
+                                    type: :PLAIN_TEXT
 
   categories = response.categories
 
@@ -184,7 +188,7 @@ def classify_text_from_cloud_storage_file storage_path:
 end
 
 
-if __FILE__ == $PROGRAM_NAME
+if $PROGRAM_NAME == __FILE__
 
   if ARGV.length == 1
     puts "Sentiment:"

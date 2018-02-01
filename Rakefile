@@ -180,6 +180,105 @@ namespace :ci do
     # This is a handy shortcut to save typing
     Rake::Task["ci:acceptance"].invoke
   end
+
+  task :release, :tag do |t, args|
+    tag = args[:tag]
+    if tag.nil?
+      fail "You must provide a tag to release."
+    end
+    # Verify the tag format "vVERSION"
+    m = tag.match /\/v(?<version>\S*)/
+    if m.nil? # We have a match!
+      fail "Tag #{tag} does not match the expected format."
+    end
+
+    package = "google-cloud-language"
+    version = m[:version]
+    if version.nil?
+      fail "You must provide a version."
+    end
+
+    api_token = ENV["RUBYGEMS_API_TOKEN"]
+
+    require "gems"
+    ::Gems.configure do |config|
+      config.key = api_token
+    end if api_token
+
+    Bundler.with_clean_env do
+      sh "rm -rf pkg"
+      sh "bundle update"
+      sh "bundle exec rake build"
+    end
+
+    path_to_be_pushed = "pkg/#{package}-#{version}.gem"
+    if File.file? path_to_be_pushed
+      begin
+        ::Gems.push(File.new path_to_be_pushed)
+        puts "Successfully built and pushed #{package} for version #{version}"
+
+        Rake::Task["jsondoc:package"].invoke tag
+      rescue => e
+        puts "Error while releasing #{package} version #{version}: #{e.message}"
+      end
+    else
+      fail "Cannot build #{package} for version #{version}"
+    end
+  end
+end
+
+namespace :travis do
+  desc "Build for Travis-CI"
+  task :build do
+    run_acceptance = false
+    if ENV["TRAVIS_BRANCH"] == "master" &&
+        ENV["TRAVIS_PULL_REQUEST"] == "false"
+      run_acceptance = true
+    end
+
+    Bundler.with_clean_env do
+      sh "gem install bundler"
+      sh "bundle update"
+
+      if run_acceptance
+        sh "bundle exec rake ci:acceptance"
+      else
+        sh "bundle exec rake ci"
+      end
+    end
+  end
+end
+
+namespace :appveyor do
+  desc "Build for AppVeyor"
+  task :build do
+    # Retrieve the SSL certificate from google-api-client gem
+    ssl_cert_file = Gem.loaded_specs["google-api-client"].full_gem_path + "/lib/cacerts.pem"
+
+    run_acceptance = false
+    if ENV["APPVEYOR_REPO_BRANCH"] == "master" && !ENV["APPVEYOR_PULL_REQUEST_NUMBER"]
+      run_acceptance = true
+    end
+
+    Bundler.with_clean_env do
+      # Fix acceptance/data symlinks on windows
+      require "fileutils"
+      FileUtils.mkdir_p "acceptance"
+      FileUtils.rm_f "acceptance/data"
+      sh "call mklink /j acceptance\\data ..\\acceptance\\data"
+
+      sh "bundle update"
+
+      if run_acceptance
+        # Set the SSL certificate so connections can be made
+        ENV["SSL_CERT_FILE"] = ssl_cert_file
+
+        sh "bundle exec rake ci:acceptance"
+      else
+        sh "bundle exec rake ci"
+      end
+    end
+  end
 end
 
 task :default => :test
