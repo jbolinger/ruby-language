@@ -187,7 +187,6 @@ def classify_text_from_cloud_storage_file storage_path:
   # [END language_classify_file]
 end
 
-
 if $PROGRAM_NAME == __FILE__
 
   if ARGV.length == 1

@@ -1,11 +1,13 @@
+inherit_from: .rubocop_todo.yml
+
 AllCops:
   Exclude:
     - "google-cloud-language.gemspec"
     - "lib/google/**/*"
     - "Rakefile"
-    - "build/**/*"
     - "test/**/*"
     - "acceptance/**/*smoke_test.rb"
+    - "build/**/*"
     - "samples/spec/**/*spec.rb"
 
 Documentation:
@@ -15,5 +17,3 @@ Style/StringLiterals:
   EnforcedStyle: double_quotes
 Style/MethodDefParentheses:
   EnforcedStyle: require_no_parentheses
-Metrics/AbcSize:
-  Enabled: false
